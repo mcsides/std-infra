@@ -7,7 +7,7 @@ Terraform configurations for managing AWS infrastructure of the Onboarding proje
 ###  Install the follwing tools:
 
 * AWS CLI
-* Terraform
+* [Terraform v1.12.1](https://developer.hashicorp.com/terraform/tutorials/aws-get-started/install-cli#install-terraform)
 
 ### Configure AWS profile
 
