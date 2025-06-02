@@ -1,0 +1,58 @@
+data "terraform_remote_state" "vpc" {
+  backend = "s3"
+  config = {
+    bucket = "stamper-labs-tfstate-bucket"
+    key    = "shared/prod/terraform.tfstate"
+    region = "us-east-1"
+  }
+}
+
+module "security_group" {
+  source         = "../../module/security_group"
+  sg_name        = "std-stg-sg-allow-http"
+  sg_vpc_id      = data.terraform_remote_state.vpc.outputs.vpc_id
+  sg_description = "Security group for ecs cluster in stage environment"
+  sg_ingress_rules = [
+    { from_port = 80, to_port = 80, protocol = "tcp", cidr_blocks = ["0.0.0.0/0"], description = "Allow Web" },
+  ]
+  sg_egress_rules = [
+    { from_port = 0, to_port = 0, protocol = "-1", cidr_blocks = ["0.0.0.0/0"], description = "Allow all outbound" },
+  ]
+  env_tag = "stg"
+}
+
+module "ecs" {
+  source           = "../../module/ecs"
+  ecs_cluster_name = "std-stg-ecs-cluster"
+  env_tag          = "stg"
+}
+
+module "iam_role" {
+  source             = "../../module/iam_role"
+  role_name          = "STDServiceRoleForECSTasks"
+  assume_role_policy = file("./docs/policies/assume-role-policy.json")
+  env_tag            = "stg"
+}
+
+module "ecs_task_definition" {
+  source                   = "../../module/ecs_task_definition"
+  td_family                = "std-stg-ecs-ftask-nginx"
+  td_network_mode          = "awsvpc"
+  td_compatibilities       = ["FARGATE"]
+  td_cpu                   = "256"
+  td_memory                = "512"
+  td_container_definitions = file("./docs/containers/nginx.json")
+  td_execution_role_arn = module.iam_role.iam_role_arn
+  env_tag                  = "stg"
+}
+
+module "ecs_service" {
+  source                  = "../../module/ecs_service"
+  svc_name                = "std-stg-ecs-fsvc"
+  svc_cluster_id          = module.ecs.ecs_cluster_id
+  svc_task_definition_arn = module.ecs_task_definition.task_definition_arn
+  svc_launch_type         = "FARGATE"
+  svc_desired_count       = 3
+  svc_subnets             = [data.terraform_remote_state.vpc.outputs.subnet_id]
+  svc_security_groups     = [module.security_group.sg_id]
+}

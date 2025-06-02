@@ -43,3 +43,9 @@ terraform {
   }
 }
 ```
+
+
+
+aws --profile stamper-prod s3api put-object \
+--bucket stamper-labs-tfstate-bucket \
+--key standard-ob/stg

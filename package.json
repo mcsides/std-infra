@@ -1,0 +1,14 @@
+{
+  "name": "shared-infra",
+  "version": "1.0.0",
+  "main": "index.js",
+  "repository": "git@github.com:mcsides/shared-infra.git",
+  "author": "Captain Mcwiise <mcwiise@gmail.com>",
+  "license": "MIT",
+  "scripts": {
+    "tf:init": "cd envs/stg && terraform init",
+    "tf:plan": "cd envs/stg && terraform plan",
+    "tf:apply": "cd envs/stg && terraform apply --auto-approve",
+    "tf:destroy": "cd envs/stg && terraform destroy --auto-approve"
+  }
+}
