@@ -56,3 +56,12 @@ module "ecs_service" {
   svc_subnets             = [data.terraform_remote_state.vpc.outputs.subnet_id]
   svc_security_groups     = [module.security_group.sg_id]
 }
+
+module "ecr_repository" {
+  source = "../../module/ecr"
+  repository_name = "std-onboarding-repository"
+}
+
+output "ecr_repository_id" {
+  value = module.ecr_repository.ecr_repository_id
+}
