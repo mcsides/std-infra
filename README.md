@@ -4,48 +4,51 @@ Terraform configurations for managing AWS infrastructure of the Onboarding proje
 
 ## Getting Started
 
-###  Install the follwing tools:
+Install the follwing tools:
 
-* AWS CLI
-* [Terraform v1.12.1](https://developer.hashicorp.com/terraform/tutorials/aws-get-started/install-cli#install-terraform)
+- Install Terraform
+- Install Nodejs 22
+- Install Yarn 1.22.22 
+- Install AWS CLI
 
 ### Configure AWS profile
 
-### Create The Terraform State Folder
-Create a bucket location for the repositories to store the terraform state file, the example below is for staging environment:
+https://github.com/Stamper-Labs/base-infra?tab=readme-ov-file#configure-aws-profile
 
-```bash
-aws --profile stamper-prod s3api put-object \
---bucket stamper-labs-tfstate-bucket \
---key standard-ob/stg
-```
+### Create The Terraform State Folder 
+
+- Make sure the terraform state configuration for the base infrastructure project is set up:
+
+  https://github.com/Stamper-Labs/base-infra?tab=readme-ov-file#setup-the-terraform-state
+
+- Then create the state folder key
+
+  ```bash
+  aws --profile stamper-prod s3api put-object \
+  --bucket stamper-labs-tfstate-bucket \
+  --key standard-ob/stg
+  ```
 
 ### Setup Remote Backends
 
-Create a remote backend configuration for a specific environment (e.g., stg):
+- Create a remote backend configuration for a specific environment (e.g., stg):
 
-```bash
-mkdir -p ./envs/stg
-cd ./envs/stg
-touch backend.tf
-```
+  ```bash
+  mkdir -p ./envs/stg
+  cd ./envs/stg
+  touch backend.tf
+  ```
 
-Add the following to backend.tf:
+- Add the following to `backend.tf`:
 
-```hcl
-terraform {
-  backend "s3" {
-    bucket         = "stamperlabs-tfstate-bucket"        # S3 bucket name
-    key            = "standard-ob/stg/terraform.tfstate" # Path to the state file in the bucket
-    region         = "us-east-1"                         # AWS region
-    encrypt        = true                                # Encrypt the state file
-    dynamodb_table = "stamperlabs-tfstate-locks"         # DynamoDB table for state locking
+  ```hcl
+  terraform {
+    backend "s3" {
+      bucket         = "stamper-labs-tfstate-bucket"        
+      key            = "standard-ob/stg/terraform.tfstate"
+      region         = "us-east-1"                      
+      encrypt        = true                                
+      dynamodb_table = "stamper-labs-tfstate-locks"
+    }
   }
-}
-```
-
-
-
-aws --profile stamper-prod s3api put-object \
---bucket stamper-labs-tfstate-bucket \
---key standard-ob/stg
+  ```
