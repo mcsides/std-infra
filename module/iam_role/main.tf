@@ -10,12 +10,8 @@ resource "aws_iam_role" "this" {
 
 # IAM policy attachment for ECS task execution role
 resource "aws_iam_role_policy_attachment" "this" {
+  for_each   = toset(var.policy_arns)
   role       = aws_iam_role.this.name
-  policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy"
-}
-
-# IAM policy attachment for ECS task execution role
-resource "aws_iam_role_policy_attachment" "thiss" {
-  role       = aws_iam_role.this.name
-  policy_arn = "arn:aws:iam::aws:policy/SecretsManagerReadWrite"
+  policy_arn = each.value
+  depends_on = [aws_iam_role.this]
 }

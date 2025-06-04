@@ -7,8 +7,13 @@ data "terraform_remote_state" "stamper-labs" {
   }
 }
 
-data "aws_s3_bucket" "example" {
+data "aws_s3_bucket" "policies-bucket" {
   bucket = data.terraform_remote_state.stamper-labs.outputs.policies_bucket_name
+}
+
+data "aws_s3_object" "ecs-task-assume-role-policy" {
+  bucket = data.aws_s3_bucket.policies-bucket.id
+  key    = "std-onboarding/ecs-task-assume-role-policy.json"
 }
 
 module "security_group" {
@@ -34,7 +39,11 @@ module "ecs" {
 module "iam_role" {
   source             = "../../module/iam_role"
   role_name          = "STDServiceRoleForECSTasks"
-  assume_role_policy = file("./docs/policies/assume-role-policy.json")
+  assume_role_policy = data.aws_s3_object.ecs-task-assume-role-policy.body
+  policy_arns = [
+    "arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy",
+    "arn:aws:iam::aws:policy/SecretsManagerReadWrite"
+  ]
   env_tag            = "stg"
 }
 
