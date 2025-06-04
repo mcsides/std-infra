@@ -1,4 +1,4 @@
-data "terraform_remote_state" "vpc" {
+data "terraform_remote_state" "stamper-labs" {
   backend = "s3"
   config = {
     bucket = "stamper-labs-tfstate-bucket"
@@ -7,10 +7,14 @@ data "terraform_remote_state" "vpc" {
   }
 }
 
+data "aws_s3_bucket" "example" {
+  bucket = data.terraform_remote_state.stamper-labs.outputs.policies_bucket_name
+}
+
 module "security_group" {
   source         = "../../module/security_group"
   sg_name        = "std-stg-sg-allow-http"
-  sg_vpc_id      = data.terraform_remote_state.vpc.outputs.vpc_id
+  sg_vpc_id      = data.terraform_remote_state.stamper-labs.outputs.vpc_id
   sg_description = "Security group for ecs cluster in stage environment"
   sg_ingress_rules = [
     { from_port = 80, to_port = 80, protocol = "tcp", cidr_blocks = ["0.0.0.0/0"], description = "Allow Web" },
@@ -53,7 +57,7 @@ module "ecs_service" {
   svc_task_definition_arn = module.ecs_task_definition.task_definition_arn
   svc_launch_type         = "FARGATE"
   svc_desired_count       = 3
-  svc_subnets             = [data.terraform_remote_state.vpc.outputs.subnet_id]
+  svc_subnets             = [data.terraform_remote_state.stamper-labs.outputs.subnet_id]
   svc_security_groups     = [module.security_group.sg_id]
 }
 
