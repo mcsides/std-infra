@@ -16,6 +16,11 @@ data "aws_s3_object" "ecs-task-assume-role-policy" {
   key    = "std-onboarding/ecs-task-assume-role-policy.json"
 }
 
+data "aws_s3_object" "oidc-assume-role-github-policy" {
+  bucket = data.aws_s3_bucket.policies-bucket.id
+  key    = "std-onboarding/oidc-assume-role-github-policy.json"
+}
+
 module "security_group" {
   source         = "../../module/security_group"
   sg_name        = "std-stg-sg-allow-http"
@@ -44,6 +49,14 @@ module "iam_role" {
     "arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy",
     "arn:aws:iam::aws:policy/SecretsManagerReadWrite"
   ]
+  env_tag            = "stg"
+}
+
+module "iam_role_github" {
+  source             = "../../module/iam_role"
+  role_name          = "STDServiceRoleForGitHub"
+  assume_role_policy = data.aws_s3_object.oidc-assume-role-github-policy.body
+  policy_arns = ["arn:aws:iam::aws:policy/AmazonS3FullAccess"]
   env_tag            = "stg"
 }
 
@@ -77,4 +90,8 @@ module "ecr_repository" {
 
 output "ecr_repository_id" {
   value = module.ecr_repository.ecr_repository_id
+}
+
+output "iam_role_github_arn" {
+  value = module.iam_role_github.iam_role_arn
 }
